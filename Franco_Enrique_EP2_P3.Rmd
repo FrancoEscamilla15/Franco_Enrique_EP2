@@ -1,0 +1,38 @@
+---
+title: "Franco_Enrique_EP2_P3"
+author: "Enrique Franco García"
+date: "31/3/2022"
+output: html_document
+---
+
+1. Cargo la libreria que voy a utilizar
+```{r}
+library(BoolNet)
+```
+
+2. Cargo mis reglas
+```{r}
+reglas <- loadNetwork("reglas.txt") #Reglas realizadas en bloc de notas
+reglas #Las cargo para visualizar que este todo bien
+```
+
+3. Atractores
+```{r}
+getAttractors(network = reglas) #Con ayuda de esta función obtengo todos los atractores de mi objeto creado
+#a partir de mis reglas
+```
+
+4. Estado más probable
+El estado más probable es el primer atractor que muestra el cual consiste unicamente de dos estados, en donde o todos estan apagados o todos estan prendidos, esto es logico ya que en nuestras reglas todos los genes se regulan entre si, el A va a inhibir al B, este a su vez al C y este al A, entonces si todos estan prendidos al siguiente estado todos van a estar apagados porque se inhiben a si mismos.
+
+5. Dibujar atractores
+```{r}
+plotAttractors(reglas) #De esta manera puedo visualizar los atractores
+```
+
+
+6. Dibuja todos los atractores juntos
+```{r}
+plotAttractors("reglas.txt")
+```
+

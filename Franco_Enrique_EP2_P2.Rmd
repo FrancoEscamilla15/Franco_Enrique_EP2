@@ -1,0 +1,112 @@
+---
+title: "Franco_Enrique_EP2_P2"
+author: "Enrique Franco García"
+date: "31/3/2022"
+output: html_document
+---
+
+El primer paso es cargar las librerías
+
+```{r}
+library(Biobase)
+library(IRanges)
+library(rtracklayer)
+```
+
+Con ayuda de la función IRanges puedo crear un objeto en el cual yo le indico donde comineza y donde termina
+
+```{r}
+x <- IRanges(start = c (15, 5, 25), end = c(30, 10, 50))
+x
+```
+
+Si queremos obtener la infoación de los rangos se hace con:
+
+```{r}
+start(x) # Indica los inicios
+end(x)   # Indica los finales
+width(x) # Indica el ancho de los rangos
+range(x) # Indica el rango total
+```
+
+Otras funciones que nos pueden ser de utilidad son:
+
+```{r}
+coverage(x) # Nos va a dar la suma de la cobertura en cada posición
+reduce (x) # Une los rangos que se encuentran encimados
+```
+
+Obteniendo la anotación de un genoma
+
+```{r}
+humano <- import("Homo_sapiens_exons_sel_e70.gtf", asRangedData = F)
+```
+
+Para manipular los datos se hace con
+
+```{r}
+table(mcols(humano)$gene_biotype)
+```
+
+Para selecionar unicamente solo algunas columnas es con:
+
+```{r}
+mcols(humano) <- mcols(humano)[,c("source","gene_id","gene_name","gene_biotype")]
+
+mcols(humano)
+```
+
+**EJERCICIO:**
+
+-   Cómo le harían para quedarse exclusivamente con las anotaciones de "miRNA"? y solamente aquellas anotaciones de la cadena "-"?
+
+    Podríamos hacerlo usando la función de IRanges, esto creando un objeto al cual le indiquemos donde comience y donde termina, aunque para hacer eso es necesario conocer donde empiezan y donde terminan. Otra forma sería usando la función de mcols en donde nosotros seleccionemos unicamente a las anotaciones de miRNA de cadena negativa
+
+**Anotación de secuencias mapeadas**
+
+```{r}
+library(Rsamtools)
+
+what <- c("rname", "strand", "pos", "qwidth")
+param <- ScanBamParam(what=what)
+
+bam <- scanBam("human_mapped_small.bam", param=param)
+
+class(bam)
+
+lapply(bam, names)
+```
+
+Con ayuda de la función scanbam podemos observar los datos que contiene nuestro archivo con extensión "BAM"
+
+También podemos crear GRanges con los datos anteriores
+
+```{r}
+mapGR <- GRanges(
+   seqnames = bam[[1]]$rname,
+   ranges   = IRanges(start=bam[[1]]$pos, width=bam[[1]]$qwidth),
+   strand   = bam[[1]]$strand
+)
+
+mapGR
+```
+
+Por otro lado con auda de la función countOverlaps podemos encontrar la cantidad de secuencias alineadas que estan traslapadas
+
+```{r}
+mcols(human)$counts = countOverlaps(human, mapGR)
+
+mcols(human)
+```
+
+La advertencia que arroja es a causa de que no coinciden todos los nombres de los cromosomas en los objetos que estan siendo comparados. Por último se pueden agregar los valores ya sea por tipo de gen o por gen individual
+
+```{r}
+typeCounts <- aggregate(mcols(human)$counts, by=list("biotype"=mcols(human)$gene_biotype), sum)
+
+typeCounts
+
+geneCounts <- aggregate(mcols(human)$counts, by=list("id"=mcols(human)$gene_name), sum)
+
+head(geneCounts)
+```
